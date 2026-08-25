@@ -1,0 +1,422 @@
+---
+title: "Spotify Wrapped 2025"
+output: html_notebook
+---
+
+```{r Load in Libraries/Data}
+song_list <- read_csv("data/spotlistr-exported-playlist.csv")
+library(tidyverse)
+library(plotly)
+library(shiny)
+library(wesanderson)
+```
+
+```{r Converting Length to Seconds}
+song_list <- song_list |>
+                separate(Length, into = c("h", "m", "s"), sep = ":", remove = FALSE) |>
+                mutate(m = as.numeric(m),
+                       s = as.numeric(s),
+                       total_sec = m * 60 + s)
+song_list$h <- NULL # removing hours as they're all 0
+```
+
+```{r Manually Add In Plays & Age}
+plays <- c(119, 116, 97, 92, 83, 81, 79, 79, 76, 74, 
+           74, 72, 70, 68, 68, 67, 66, 62, 57, 57, 
+           57, 56, 54, 54, 54, 54, 53, 53, 53, 52, 
+           51, 50, 49, 49, 49, 48, 48, 47, 47, 46, 
+           46, 45, 45, 44, 44, 43, 43, 43, 43, 42, 
+           42, 42, 41, 41, 40, 40, 39, 39, 39, 39, 
+           38, 38, 38, 38, 37, 37, 36, 36, 36, 35, 
+           35, 35, 35, 34, 34, 34, 33, 33, 32, 32, 
+           32, 32, 32, 32, 32, 31, 31, 31, 31, 30, 
+           30, 30, 30, 29, 29, 29, 29, 28, 28, 28)
+
+song_list <- song_list |>
+  mutate(artist_age = case_when(
+    Arist.s..Name == "Sabrina Carpenter " ~ 25,
+    Arist.s..Name == "Lady Gaga " ~ 38,
+    Arist.s..Name == "Cavetown " ~ 25,
+    Arist.s..Name == "bbno$ " ~ 29,
+    Arist.s..Name == "Anika Noni Rose " ~ 52,
+    Arist.s..Name == "Chappell Roan " ~ 27,
+    Arist.s..Name == "Troye Sivan " ~ 29,
+    Arist.s..Name == "Elliot James Reay " ~ 23,
+    Arist.s..Name == "KiNG MALA " ~ 23,
+    Arist.s..Name == "Cardi B; Bruno Mars " ~ 37,  # (33 + 39)/2
+    Arist.s..Name == "ELIO; Charli xcx " ~ 29,  # (24 + 33)/2
+    Arist.s..Name == "bbno$; Ironmouse " ~ 31,  # (29 + 33)/2
+    Arist.s..Name == "Mercer Henderson " ~ 25,
+    Arist.s..Name == "Jutes; Ari Abdul " ~ 25,  # (27 + 23)/2
+    Arist.s..Name == "Bruno Mars; Anderson .Paak; Silk Sonic " ~ 39,  # (39 + 38)/2
+    Arist.s..Name == "Clairo " ~ 27,
+    Arist.s..Name == "Chrissy Chlapecka " ~ 25,
+    Arist.s..Name == "Arcane; Ashnikko " ~ 28,
+    Arist.s..Name == "Madison Beer " ~ 25,
+    Arist.s..Name == "Tyler, The Creator; Lola Young " ~ 31,  # (33 + 28)/2
+    Arist.s..Name == "Bruno Mars; Cardi B " ~ 36,  # (39 + 33)/2
+    Arist.s..Name == "Toby Fox " ~ 33,
+    Arist.s..Name == "Jason Derulo " ~ 35,
+    Arist.s..Name == "Doechii " ~ 26,
+    Arist.s..Name == "Neon Trees " ~ 39,  # Average age of members
+    Arist.s..Name == "TWICE " ~ 25,  # Average age of 9 members
+    Arist.s..Name == "COIN " ~ 32,  # Average age of band members
+    Arist.s..Name == "Carly Rae Jepsen " ~ 40,
+    Arist.s..Name == "TWICE; Megan Thee Stallion " ~ 26,  # (25 + 30)/2
+    Arist.s..Name == "Nxdia " ~ 22,
+    Arist.s..Name == "PUBLIC " ~ 29,  # Average age of members
+    Arist.s..Name == "J. Cole " ~ 40,
+    Arist.s..Name == "One Direction " ~ 31,  # Average age of 5 members
+    Arist.s..Name == "HUNTR/X; EJAE; AUDREY NUNA; REI AMI; KPop Demon Hunters Cast " ~ 26,  # Average of cast
+    Arist.s..Name == "Stray Kids; Young Miko; Tom Morello " ~ 29,  # Average: (24 + 27 + 60)/3
+    Arist.s..Name == "Saja Boys; Andrew Choi; Neckwav; Danny Chung; KEVIN WOO; samUIL Lee; KPop Demon Hunters Cast " ~ 30,  # Average of cast
+    Arist.s..Name == "Bruno Mars " ~ 39,
+    Arist.s..Name == "Ethan Slater; Danny Skinner " ~ 33,  # (32 + 34)/2
+    Arist.s..Name == "Precious Pepala " ~ 28,
+    Arist.s..Name == "KiNG MALA; UPSAHL " ~ 23,  # (23 + 23)/2
+    Arist.s..Name == "Future; Metro Boomin; Kendrick Lamar " ~ 40,  # (41 + 32 + 38)/3
+    Arist.s..Name == "Maroon 5 " ~ 38,  # Average age of band
+    Arist.s..Name == "Erika Henningsen; Original Broadway Cast of Mean Girls " ~ 32,  # Cast average
+    Arist.s..Name == "chloe moriondo " ~ 22,
+    Arist.s..Name == "FLETCHER " ~ 30,
+    Arist.s..Name == "ELIO " ~ 24,
+    Arist.s..Name == "Mad Tsai " ~ 25,
+    Arist.s..Name == "Vienna Teng " ~ 44,
+    Arist.s..Name == "Cheech Manohar; Erika Henningsen; Ashley Park; Kate Rockwell; Original Broadway Cast of Mean Girls " ~ 34,  # Cast average
+    Arist.s..Name == "dodie " ~ 29,
+    Arist.s..Name == "Bruno Major " ~ 36,
+    Arist.s..Name == "Emei " ~ 25,
+    Arist.s..Name == "Waterparks " ~ 29,  # Band average age
+    Arist.s..Name == "Little Mix " ~ 32,  # Average of remaining members
+    Arist.s..Name == "Tessa Violet " ~ 34,
+    Arist.s..Name == "ROSÉ " ~ 28,
+    Arist.s..Name == "Joey Valence & Brae " ~ 25,  # (24 + 25)/2
+    Arist.s..Name == "Bruno Mars; Anderson .Paak; Silk Sonic; Thundercat; Bootsy Collins " ~ 45,  # Average with Bootsy (74)
+    Arist.s..Name == "Charli xcx " ~ 33,
+    Arist.s..Name == "Re-Logic " ~ 35,  # Average age of dev team
+    Arist.s..Name == "Baby Queen " ~ 28,
+    Arist.s..Name == "Magdalena Bay " ~ 30,  # Duo average
+    Arist.s..Name == "Kesha " ~ 37,
+    Arist.s..Name == "Ava Max " ~ 30,
+    Arist.s..Name == "Charlie Puth " ~ 33,
+    TRUE ~ NA_real_
+  ))
+
+song_list$plays <- plays
+
+song_list <- song_list |>
+      mutate(total_secs_played = plays * total_sec,
+             total_mins_played = total_secs_played / 60,
+             total_hours_played = total_mins_played / 60)
+
+sum(song_list$total_hours_played)
+```
+
+```{r Manually Adding Gender}
+# Options: Cis Men, Cis Women, Mixed/Other (m, w, o)
+# Mixed/Other includes multiple people of different genders, nonbinary/genderfluid people, trans people, etc
+
+song_list$gender <- c("w", "w", "w", "o", "m", "w", "w", "m", "m", "w", 
+                      "w", "o", "w", "o", "w", "o", "w", "o", "w", "w",
+                      "w", "w", "o", "w", "w", "o", "o", "m", "m", "w",
+                      "o", "w", "w", "m", "w", "w", "w", "w", "m", "o",
+                      "w", "o", "m", "m", "w", "m", "w", "w", "w", "o",
+                      "m", "m", "w", "m", "w", "w", "w", "m", "w", "m",
+                      "m", "w", "w", "w", "w", "w", "w", "w", "m", "m",
+                      "w", "o", "w", "w", "m", "w", "m", "w", "w", "w",
+                      "w", "w", "w", "m", "w", "w", "o", "m", "w", "w",
+                      "m", "w", "o", "w", "m", "w", "w", "w", "m", "w")
+
+# it was just easier to input the values as single letters (I did this by hand)
+song_list <- song_list |> 
+      mutate(gender = case_when(gender == "w" ~ "Woman",
+                                gender == "m" ~ "Man",
+                                gender == "o" ~ "Mixed/Other"))
+```
+
+```{r Plays Distribution}
+# Creating a global font for all future distributions
+global_font <- list(family = "Verdana",
+                    color = "#000000")
+
+# Set new color scheme
+wes_colors1 <- wes_palette("GrandBudapest1", n = 4)
+
+# Dictate tooltip text
+song_list <- song_list |>
+      mutate(text = paste0("<b>", Track.Name, "</b><br>",
+                           Arist.s..Name, "<br>",
+                           "Plays: ", plays, "<br>",
+                           "Gender: ", gender))
+# Prepare ggplot frame
+p1 <- song_list |>
+      ggplot(aes(x = plays, fill = gender, text = text)) +
+      geom_histogram(binwidth = 2) +
+      theme_bw() +
+      scale_fill_manual(values = wes_colors1[c(1, 2, 3)]) +
+      labs(fill = "Gender")
+
+# Arrange ggplot & text into plotly
+ggplotly(p1, tooltip = "text") |>
+      layout(plot_bgcolor = "white",
+             paper_bgcolor = wes_colors1[4],
+             font = global_font,
+             title = list(text = "<b>Women Dominated My Top 100 Tracks This Year</b><br><sub>(My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                          font = global_font),
+             xaxis = list(title = "Plays",
+                          titlefont = global_font,
+                          tickfont = global_font),
+             yaxis = list(title = "Number of Songs",
+                          titlefont = global_font,
+                          tickfont = global_font),
+             legend = list(font = global_font),
+             margin = list(t = 100))
+```
+```{r}
+# Dictate tooltip text
+song_list <- song_list |>
+      mutate(text7 = paste0(Arist.s..Name, "<br>",
+                           "Age: ", artist_age))
+p7 <- song_list |>
+  group_by(artist_age, Arist.s..Name, text7) |>
+  distinct(Arist.s..Name) |>
+  ggplot(aes(x = artist_age, text = text7)) +
+  geom_histogram(binwidth = 2, fill = wes_colors1[1]) +
+  theme_bw()
+
+# Arrange ggplot & text into plotly
+ggplotly(p7, tooltip = "text") |>
+  layout(plot_bgcolor = "white",
+         paper_bgcolor = wes_colors1[4],
+         font = global_font,
+         title = list(text = "<b>Most Artists I Listen to Are in Their 20-30's</b><br><sub>(My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                      font = global_font),
+         xaxis = list(title = "Artist Age (years)",
+                      titlefont = global_font,
+                      tickfont = global_font),
+         yaxis = list(title = "Number of Artists",
+                      titlefont = global_font,
+                      tickfont = global_font),
+         legend = list(font = global_font),
+         margin = list(t = 100))
+```
+
+```{r Gender bar distribution}
+# Dictate tooltip text & calculate percentages
+top_25_summary <- song_list |>
+      slice(1:25) |>
+      count(gender) |>
+      mutate(pct = n / sum(n),
+             text = paste0("<b>", gender, "</b><br>", 
+                           n, " songs (", scales::percent(pct, accuracy = 1), ")"))
+
+# Arrange ggplot & text into plotly
+plot_ly(data = top_25_summary,
+        y = ~gender,
+        x = ~pct,
+        type = "bar",
+        orientation = "h",
+        marker = list(color = c(wes_colors1[1], wes_colors1[2], wes_colors1[3])),  # Match order of gender levels),
+                      text = ~text,
+                      hoverinfo = "text",
+                      textposition = "outside",
+                      texttemplate = "%{x:.0%}",
+                      textfont = global_font) |>
+        layout(plot_bgcolor = "white",
+               paper_bgcolor = wes_colors1[4],
+               font = global_font,
+               title = list(text = "<b>My Top 25 is Comprised of Primarily Non-male Artists</b><br><sub>(My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                            font = global_font),
+               xaxis = list(title = "Gender",
+                            titlefont = global_font,
+                            tickfont = global_font,
+                            tickformat = ".0%",
+                            range = c(0, 0.7)),
+               yaxis = list(title = "",
+                            titlefont = global_font,
+                            tickfont = global_font),
+               showlegend = FALSE,
+               margin = list(t = 100, r = 50))
+```
+
+```{r Length Distribution}
+# Set new color scheme
+wes_colors2 <- wes_palette("GrandBudapest2", n = 4)
+
+# Dictate tooltip text
+song_list <- song_list |>
+  mutate(text = paste0( total_sec, " seconds long<br>"))
+
+# Prepare ggplot frame
+p2 <- song_list |>
+  ggplot(aes(x = total_sec, text = text)) +
+  geom_histogram(binwidth = 5, fill = wes_colors2[1]) +
+  theme_bw()
+
+# Arrange ggplot & text into plotly
+ggplotly(p2, tooltip = "text") |>
+  layout(plot_bgcolor = "white",
+         paper_bgcolor = wes_colors2[2],
+         font = global_font,
+         title = list(text = "<b>Most Songs I Listen To Are 2-4 Minutes Long</b><br><sub>(My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                      font = global_font),
+         xaxis = list(title = "Song Length (seconds)",
+                      titlefont = global_font,
+                      tickfont = global_font),
+         yaxis = list(title = "Number of Songs",
+                      titlefont = global_font,
+                      tickfont = global_font),
+         legend = list(font = global_font),
+         margin = list(t = 100))
+```
+
+```{r length v. plays scatter/bubble}
+# Set new color scheme
+wes_colors3 <- wes_palette("Darjeeling1", n = 3)
+
+# Dictate tooltip text / setup line of best fit
+song_list <- song_list |>
+      mutate(text = paste0("<b>", Track.Name, "</b><br>", 
+                           Arist.s..Name, "<br>",
+                           "Length: ", round(total_sec / 60, 2), " min<br>", 
+                           "Plays: ", plays),
+             fitted = predict(lm(plays ~ total_sec, data = song_list)))
+
+# Prepare ggplot frame
+p4 <- song_list |>
+        ggplot(aes(x = total_sec, y = plays)) +
+        geom_point(aes(text = text),
+                   color = wes_colors3[3],
+                   alpha = 0.8,
+                   size = 2) +
+        geom_line(aes(y = fitted),
+                  color = wes_colors3[1],
+                  linewidth = 1) +
+        theme_bw() +
+        theme(panel.grid.minor = element_blank())
+
+# Arrange ggplot & text into plotly
+ggplotly(p4, tooltip = "text") |>
+    layout(plot_bgcolor = "white",
+           paper_bgcolor = wes_colors3[2],
+           font = global_font,
+           title = list(text = "<b>Song Length Had Almost No Effect on Replay Behavior</b><br><sub>(My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                        font = global_font),
+           xaxis = list(title = "Song Length (seconds)",
+                        titlefont = global_font,
+                        tickfont = global_font),
+           yaxis = list(title = "Number of Plays",
+                        titlefont = global_font,
+                        tickfont = global_font),
+           margin = list(t = 100))
+```
+
+```{r}
+# Dictate tooltip text
+song_list <- song_list |>
+                mutate(text = paste0("<b>", Track.Name, "</b><br>", Arist.s..Name, "<br>",
+                                     "Total time: ", round(total_mins_played, 1), " minutes<br>", 
+                                     "Plays: ", plays))
+
+# Prepare ggplot frame
+p4 <- song_list |>
+        ggplot(aes(x = total_mins_played, text = text)) +
+        geom_histogram(binwidth = 30,
+                       fill = wes_colors3[3],
+                       alpha = 0.7,
+                       color = "white") +
+        geom_vline(xintercept = 240,
+                   linetype = "dashed",
+                   linewidth = 0.8,
+                   color = wes_colors3[1]) +
+        theme_bw() +
+        theme(panel.grid.minor = element_blank())
+
+# Arrange ggplot & text into plotly
+ggplotly(p4, tooltip = "text") |>
+      layout(plot_bgcolor = "white",
+             paper_bgcolor = wes_colors3[2],
+             font = global_font,
+             title = list(text = "<b>Most Songs Were Not Played for More Than Four Hours</b><br><sub>(Cumulative listening time per track — Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                          font = global_font),
+             xaxis = list(title = "Total Minutes Listened per Song",
+                          titlefont = global_font,
+                          tickfont = global_font),
+             yaxis = list(title = "Number of Songs",
+                          titlefont = global_font,
+                          tickfont = global_font),
+             margin = list(t = 100),
+             annotations = list(x = 245, # 4 hour cutoff line
+                                y = 0.75,
+                                yref = "paper",
+                                text = "4 hours",
+                                xanchor = "left",
+                                yanchor = "top",
+                                showarrow = FALSE,
+                                font = global_font))
+```
+
+```{r}
+#write.csv(song_list, file = "FINAL-spotify-data.csv", row.names = FALSE)
+```
+
+
+```{r}
+artist_summary <- song_list |>
+                mutate(Arist.s..Name = str_trim(Arist.s..Name, side = "right"),
+                       Arist.s..Name = case_when(grepl("Saja", Arist.s..Name) ~ "K-Pop Demon Hunters Cast",
+                                                 grepl("HUNTR/X", Arist.s..Name) ~ "K-Pop Demon Hunters Cast",
+                                                 TRUE ~ Arist.s..Name)) |>
+                separate_rows(Arist.s..Name, sep= "; ") |>
+                mutate(genre = case_when(Arist.s..Name %in% c("TWICE", "K-Pop Demon Hunters Cast") ~ "K-Pop",
+                                         Arist.s..Name %in% c("Maroon 5", "COIN", "Neon Trees") ~ "Pop Rock",
+                                         Arist.s..Name %in% c("Lady Gaga", "Sabrina Carpenter", "Kesha", "FLETCHER", "Chappell Roan", "Chrissy Chlapecka") ~ "Pop",
+                                         Arist.s..Name == "Mercer Henderson" ~ "R&B/Soul",
+                                         Arist.s..Name %in% c("bbno$", "Doechii") ~ "Rap",
+                                         Arist.s..Name == "KiNG MALA" ~ "Alt Pop",
+                                         TRUE ~ NA_character_))
+
+artist_summary <- artist_summary |>
+                    group_by(Arist.s..Name) |>
+                    summarise(n = n(),
+                              genre = first(genre)) |>
+                    filter(n >= 2) |>
+                    arrange(desc(n)) |> 
+                    mutate(text6 = paste0("<b>", Arist.s..Name, "</b><br>",
+                                          "Songs: ", n, "<br>",
+                                          "Genre: ", genre))
+
+
+genre_colors <- c("K-Pop" = "indianred1",
+                  "Pop Rock" = "darkgoldenrod2",
+                  "Pop" = wes_colors2[4],
+                  "Rap" = "olivedrab",
+                  "R&B/Soul" = wes_colors2[1],
+                  "Alt Pop" = "darkslateblue")
+
+plot_ly(data = artist_summary,
+        x = ~reorder(Arist.s..Name, n),
+        y = ~n,
+        type = "bar",
+        color = ~genre,
+        colors = genre_colors, 
+        text = ~text6,
+        hoverinfo = "text") |>
+        layout(plot_bgcolor = "white",
+               paper_bgcolor = wes_colors2[2],
+               font = global_font,
+               title = list(text = "<b>I Listen to Mostly Pop and its Subgenres</b><br><sub>(Artists With at Least 2 Appearances — My Top 100 Songs, Spotify Wrapped 2025)</sub>",
+                            font = global_font),
+               xaxis = list(title = "",
+                            showticklabels = FALSE,
+                            titlefont = global_font,
+                            tickfont = global_font),
+               yaxis = list(title = "Number of Songs",
+                            titlefont = global_font,
+                            tickfont = global_font),
+               showlegend = TRUE,
+               legend = list(title = list(text = "<b>Genre</b>"),
+                             font = global_font),
+               margin = list(t = 100))
+```
+
