@@ -6,6 +6,8 @@ This project investigates how platform design shapes listening behavior, and how
 
 Read it here: [I Analyzed My Spotify Data So You'd Think About Yours](https://nadia-bourne.shinyapps.io/spotify/)
 
+[And check out the actual Wrapped playlist here!](https://open.spotify.com/playlist/37i9dQZEVXddFkRQtK9y4L?si=41e5167558194eb2)
+
 ## Files
 
 - `app.R` — Shiny web application code, including UI layout, custom CSS, and server-side plot rendering
