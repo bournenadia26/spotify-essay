@@ -14,3 +14,4 @@ And check out the Wrapped playlist [here!](https://open.spotify.com/playlist/7ne
 - `spotify.Rmd` — data cleaning and feature engineering script; handles type conversion, manual enrichment, and dataframe preparation
 - `FINAL-spotify-data.csv` — cleaned and enriched dataset used by the app
 - `spotlistr-exported-playlist.csv` — unmodified CSV as exported from Spotifylistr
+- `STS101-spotify-slides` — slide deck I created for my presentation to STS101 (the very class that inspired this project!)
